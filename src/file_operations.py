@@ -36,7 +36,7 @@ except ImportError:
     except ImportError:
         PDF_AVAILABLE = False
 
-def process_text_for_preview(text: str, is_multi_line: bool = False) -> str:
+def process_text_for_preview(text: str, is_multi_line: bool = False, max_lines: int = 1) -> str:
     """Process text for preview display."""
     if not text:
         return ""
@@ -48,8 +48,8 @@ def process_text_for_preview(text: str, is_multi_line: bool = False) -> str:
         return ""
         
     if is_multi_line:
-        # Get up to MAX_LINES_PREVIEW lines and join with spaces
-        preview_lines = lines[:c.MAX_LINES_PREVIEW]
+        # Get up to max_lines lines and join with spaces
+        preview_lines = lines[:max_lines]
         return " ".join(preview_lines)
     else:
         # Return just the first line
@@ -98,18 +98,18 @@ def process_files(
             copy_file_with_new_name(current_dir, new_dir, old_name, new_name)
     return new_dir
 
-def get_docx_preview(file_path: str, is_multi_line: bool) -> str:
+def get_docx_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
     """Get preview of DOCX file."""
     if not DOCX_AVAILABLE:
         return "Install python-docx for .docx preview"
     try:
         doc = docx.Document(file_path)
         text = "\n".join(paragraph.text for paragraph in doc.paragraphs if paragraph.text)
-        return process_text_for_preview(text, is_multi_line)
+        return process_text_for_preview(text, is_multi_line, max_lines)
     except Exception:
         return "Unable to read DOCX file"
 
-def get_doc_preview(file_path: str, is_multi_line: bool) -> str:
+def get_doc_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
     """Get preview of DOC file."""
     if not DOC_AVAILABLE:
         return "Install pywin32 for .doc preview"
@@ -119,22 +119,22 @@ def get_doc_preview(file_path: str, is_multi_line: bool) -> str:
         text = doc.Content.Text
         doc.Close()
         word.Quit()
-        return process_text_for_preview(text, is_multi_line)
+        return process_text_for_preview(text, is_multi_line, max_lines)
     except Exception:
         return "Unable to read DOC file"
 
-def get_excel_preview(file_path: str, is_multi_line: bool) -> str:
+def get_excel_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
     """Get preview of Excel file."""
     if not EXCEL_AVAILABLE:
         return "Install pandas and openpyxl/xlrd for Excel preview"
     try:
-        df = pd.read_excel(file_path, nrows=c.MAX_LINES_PREVIEW if is_multi_line else 1)
-        preview = df.to_string(max_rows=c.MAX_LINES_PREVIEW if is_multi_line else 1)
-        return process_text_for_preview(preview, is_multi_line)
+        df = pd.read_excel(file_path, nrows=max_lines if is_multi_line else 1)
+        preview = df.to_string(max_rows=max_lines if is_multi_line else 1)
+        return process_text_for_preview(preview, is_multi_line, max_lines)
     except Exception:
         return "Unable to read Excel file"
 
-def get_pdf_preview(file_path: str, is_multi_line: bool) -> str:
+def get_pdf_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
     """Get preview of PDF file."""
     if not PDF_AVAILABLE:
         return "Install PyMuPDF or pdfplumber for PDF preview"
@@ -146,17 +146,17 @@ def get_pdf_preview(file_path: str, is_multi_line: bool) -> str:
         except NameError:
             with pdfplumber.open(file_path) as pdf:
                 text = pdf.pages[0].extract_text()
-        return process_text_for_preview(text, is_multi_line)
+        return process_text_for_preview(text, is_multi_line, max_lines)
     except Exception:
         return "Unable to read PDF file"
 
-def get_text_preview(file_path: str, is_multi_line: bool) -> str:
+def get_text_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
     """Get preview of text file."""
     try:
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             if is_multi_line:
                 lines = []
-                for _ in range(c.MAX_LINES_PREVIEW):
+                for _ in range(max_lines):
                     line = f.readline()
                     if not line:
                         break
@@ -164,11 +164,11 @@ def get_text_preview(file_path: str, is_multi_line: bool) -> str:
                 text = "".join(lines)
             else:
                 text = f.readline()
-            return process_text_for_preview(text, is_multi_line)
+            return process_text_for_preview(text, is_multi_line, max_lines)
     except Exception:
         return "Unable to read text file"
 
-def get_file_preview(file_path: str, is_multi_line: bool = False) -> str:
+def get_file_preview(file_path: str, is_multi_line: bool = False, max_lines: int = 1) -> str:
     """Get a preview of the file's content based on file type."""
     ext = os.path.splitext(file_path)[1].lower()
     
@@ -185,4 +185,4 @@ def get_file_preview(file_path: str, is_multi_line: bool = False) -> str:
     }
     
     preview_func = preview_functions.get(ext, get_text_preview)
-    return preview_func(file_path, is_multi_line)
+    return preview_func(file_path, is_multi_line, max_lines)

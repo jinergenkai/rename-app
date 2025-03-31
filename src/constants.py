@@ -2,7 +2,7 @@
 
 # Window settings
 WINDOW_TITLE = "File Renamer Tool"
-WINDOW_SIZE = "1000x800"
+WINDOW_SIZE = "1000x600"
 
 # UI text
 DIRECTORY_FRAME_TEXT = "Selected Directory"
@@ -10,6 +10,8 @@ NO_DIR_SELECTED = "No directory selected"
 FILES_FRAME_TEXT = "Files to Rename"
 RENAME_PATTERN_TEXT = "Rename Pattern"
 SUPPORTED_FILES_TEXT = "Supported Files:"
+PREVIEW_OPTIONS_TEXT = "Preview Options"
+PREVIEW_LINES_LABEL = "Number of lines to preview:"
 
 # Column names
 ORIGINAL_NAME_COL = "Original Name"
@@ -24,7 +26,6 @@ PREVIEW_COL_WIDTH = 400
 LOAD_DIR_BTN = "Load Directory"
 PREVIEW_BTN = "Preview Changes"
 APPLY_BTN = "Apply Changes"
-PREVIEW_MODE_BTN = "Toggle Preview Mode"
 
 # Messages
 WARNING_SELECT_DIR = "Please select a directory first!"
@@ -37,10 +38,8 @@ UNSUPPORTED_FILE = "(Unsupported file type)"
 RENAMED_FILES_DIR = "renamed_files"
 
 # Preview settings
-PREVIEW_FIRST_LINE = "First Line"
-PREVIEW_MULTI_LINE = "10 Lines"
-PREVIEW_MODES = [PREVIEW_FIRST_LINE, PREVIEW_MULTI_LINE]
-MAX_LINES_PREVIEW = 10
+DEFAULT_PREVIEW_LINES = 1
+MAX_PREVIEW_LINES = 50
 PREVIEW_PLACEHOLDER = "(Binary file or empty)"
 
 # Supported file extensions
