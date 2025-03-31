@@ -4,9 +4,10 @@ import os
 import shutil
 import re
 from pathlib import Path
-from typing import List, Tuple, Optional, Set
+from typing import List, Tuple, Optional, Set, Dict
 
 from . import constants as c
+from . import ai_operations as ai
 
 # Optional imports for different file types
 try:
@@ -70,6 +71,15 @@ def create_content_based_filename(content: str, ext: str, used_names: Set[str]) 
     filename = clean_filename(text)
     return handle_duplicate_name(filename, ext, used_names)
 
+def create_ai_based_filename_and_summary(content: str, ext: str, used_names: Set[str]) -> Tuple[str, str]:
+    """Create filename using AI and get summary."""
+    try:
+        suggested_name, summary = ai.generate_filename_and_summary(content)
+        filename = clean_filename(suggested_name)
+        return handle_duplicate_name(filename, ext, used_names), summary
+    except Exception as e:
+        raise Exception(f"{c.AI_ERROR.format(str(e))}")
+
 def process_text_for_preview(text: str, is_multi_line: bool = False, max_lines: int = 1) -> str:
     """Process text for preview display."""
     if not text:
@@ -103,7 +113,8 @@ def create_new_filename(
     prefix: str = "",
     suffix: str = "",
     content: Optional[str] = None,
-    used_names: Optional[Set[str]] = None
+    used_names: Optional[Set[str]] = None,
+    ai_summaries: Optional[Dict[str, str]] = None
 ) -> str:
     """Create new filename based on selected pattern."""
     if used_names is None:
@@ -113,16 +124,15 @@ def create_new_filename(
     
     if pattern == c.PATTERN_CONTENT and content:
         return create_content_based_filename(content, ext, used_names)
+    elif pattern == c.PATTERN_AI and content:
+        if ai_summaries is not None:
+            new_name, summary = create_ai_based_filename_and_summary(content, ext, used_names)
+            ai_summaries[filename] = summary
+            return new_name
+        return handle_duplicate_name(f"{name}_ai", ext, used_names)
     elif pattern == c.PATTERN_PREFIX_SUFFIX:
         new_name = f"{prefix}{name}{suffix}"
         return handle_duplicate_name(new_name, ext, used_names)
-    elif pattern == c.PATTERN_AI:
-        # Placeholder for future AI implementation
-        # For now, just use the first line of content with AI marker
-        if content:
-            new_name = f"AI_{clean_filename(content.split('\n')[0])}"
-            return handle_duplicate_name(new_name, ext, used_names)
-        return handle_duplicate_name(f"{name}_ai", ext, used_names)
     
     return filename
 
