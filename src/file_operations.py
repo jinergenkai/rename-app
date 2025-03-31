@@ -2,8 +2,9 @@
 
 import os
 import shutil
+import re
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Set
 
 from . import constants as c
 
@@ -36,6 +37,39 @@ except ImportError:
     except ImportError:
         PDF_AVAILABLE = False
 
+def clean_filename(text: str) -> str:
+    """Convert text to valid filename."""
+    # Remove invalid filename characters
+    text = re.sub(r'[<>:"/\\|?*]', '', text)
+    # Replace whitespace sequences with single space
+    text = re.sub(r'\s+', ' ', text.strip())
+    # Truncate if too long
+    if len(text) > c.MAX_FILENAME_LENGTH:
+        text = text[:c.MAX_FILENAME_LENGTH].strip()
+    return text or "untitled"
+
+def handle_duplicate_name(name: str, ext: str, used_names: Set[str]) -> str:
+    """Handle duplicate filenames by adding numbers."""
+    base_name = name
+    counter = 1
+    new_name = f"{name}{ext}"
+    
+    while new_name.lower() in (n.lower() for n in used_names):
+        name = f"{base_name} ({counter})"
+        new_name = f"{name}{ext}"
+        counter += 1
+    
+    used_names.add(new_name)
+    return new_name
+
+def create_content_based_filename(content: str, ext: str, used_names: Set[str]) -> str:
+    """Create filename based on content preview."""
+    # Get first line or chunk of content
+    text = content.split('\n')[0] if '\n' in content else content
+    # Clean and format the text
+    filename = clean_filename(text)
+    return handle_duplicate_name(filename, ext, used_names)
+
 def process_text_for_preview(text: str, is_multi_line: bool = False, max_lines: int = 1) -> str:
     """Process text for preview display."""
     if not text:
@@ -63,10 +97,34 @@ def get_files_in_directory(directory: str) -> List[str]:
         and os.path.splitext(f)[1].lower() in c.SUPPORTED_EXTENSIONS
     ]
 
-def create_new_filename(filename: str, prefix: str = "", suffix: str = "") -> str:
-    """Create new filename with prefix and suffix."""
+def create_new_filename(
+    filename: str,
+    pattern: str,
+    prefix: str = "",
+    suffix: str = "",
+    content: Optional[str] = None,
+    used_names: Optional[Set[str]] = None
+) -> str:
+    """Create new filename based on selected pattern."""
+    if used_names is None:
+        used_names = set()
+        
     name, ext = os.path.splitext(filename)
-    return f"{prefix}{name}{suffix}{ext}"
+    
+    if pattern == c.PATTERN_CONTENT and content:
+        return create_content_based_filename(content, ext, used_names)
+    elif pattern == c.PATTERN_PREFIX_SUFFIX:
+        new_name = f"{prefix}{name}{suffix}"
+        return handle_duplicate_name(new_name, ext, used_names)
+    elif pattern == c.PATTERN_AI:
+        # Placeholder for future AI implementation
+        # For now, just use the first line of content with AI marker
+        if content:
+            new_name = f"AI_{clean_filename(content.split('\n')[0])}"
+            return handle_duplicate_name(new_name, ext, used_names)
+        return handle_duplicate_name(f"{name}_ai", ext, used_names)
+    
+    return filename
 
 def create_renamed_directory(base_dir: str, new_dir_name: str) -> str:
     """Create directory for renamed files."""
@@ -101,18 +159,18 @@ def process_files(
 def get_docx_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
     """Get preview of DOCX file."""
     if not DOCX_AVAILABLE:
-        return "Install python-docx for .docx preview"
+        return "Cần cài đặt python-docx để xem file docx"
     try:
         doc = docx.Document(file_path)
         text = "\n".join(paragraph.text for paragraph in doc.paragraphs if paragraph.text)
         return process_text_for_preview(text, is_multi_line, max_lines)
     except Exception:
-        return "Unable to read DOCX file"
+        return "Không thể đọc file DOCX"
 
 def get_doc_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
     """Get preview of DOC file."""
     if not DOC_AVAILABLE:
-        return "Install pywin32 for .doc preview"
+        return "Cần cài đặt pywin32 để xem file doc"
     try:
         word = win32com.client.Dispatch("Word.Application")
         doc = word.Documents.Open(file_path)
@@ -121,23 +179,23 @@ def get_doc_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
         word.Quit()
         return process_text_for_preview(text, is_multi_line, max_lines)
     except Exception:
-        return "Unable to read DOC file"
+        return "Không thể đọc file DOC"
 
 def get_excel_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
     """Get preview of Excel file."""
     if not EXCEL_AVAILABLE:
-        return "Install pandas and openpyxl/xlrd for Excel preview"
+        return "Cần cài đặt pandas và openpyxl/xlrd để xem file Excel"
     try:
         df = pd.read_excel(file_path, nrows=max_lines if is_multi_line else 1)
         preview = df.to_string(max_rows=max_lines if is_multi_line else 1)
         return process_text_for_preview(preview, is_multi_line, max_lines)
     except Exception:
-        return "Unable to read Excel file"
+        return "Không thể đọc file Excel"
 
 def get_pdf_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
     """Get preview of PDF file."""
     if not PDF_AVAILABLE:
-        return "Install PyMuPDF or pdfplumber for PDF preview"
+        return "Cần cài đặt PyMuPDF hoặc pdfplumber để xem file PDF"
     try:
         text = ""
         try:
@@ -148,7 +206,7 @@ def get_pdf_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
                 text = pdf.pages[0].extract_text()
         return process_text_for_preview(text, is_multi_line, max_lines)
     except Exception:
-        return "Unable to read PDF file"
+        return "Không thể đọc file PDF"
 
 def get_text_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str:
     """Get preview of text file."""
@@ -166,7 +224,7 @@ def get_text_preview(file_path: str, is_multi_line: bool, max_lines: int) -> str
                 text = f.readline()
             return process_text_for_preview(text, is_multi_line, max_lines)
     except Exception:
-        return "Unable to read text file"
+        return "Không thể đọc file văn bản"
 
 def get_file_preview(file_path: str, is_multi_line: bool = False, max_lines: int = 1) -> str:
     """Get a preview of the file's content based on file type."""

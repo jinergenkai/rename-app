@@ -1,116 +1,107 @@
-# File Renamer Tool
+# Công Cụ Đổi Tên Tập Tin
 
-A simple Python GUI application to rename multiple files with prefix/suffix in a selected directory.
+Ứng dụng GUI đơn giản để đổi tên nhiều tập tin dựa trên nội dung.
 
-## Quick Start
+## Tính Năng
 
-**Windows Users**: See [WINDOWS.md](WINDOWS.md) for detailed Windows-specific setup and development instructions.
+1. Tùy chọn đổi tên:
+   - **Dùng Nội Dung**: Dùng nội dung tập tin làm tên (mặc định)
+   - **AI Tóm Tắt**: Dùng AI để tạo tên tập tin (sắp có)
+   - **Tiền Tố/Hậu Tố**: Thêm tiền tố hoặc hậu tố vào tên
 
-## Supported File Types
+2. Định dạng hỗ trợ:
+   - `.docx` - Tài liệu Word
+   - `.doc` - Tài liệu Word cũ (Windows)
+   - `.xlsx` - Bảng tính Excel
+   - `.xls` - Bảng tính Excel cũ
+   - `.pdf` - Tài liệu PDF
+   - `.txt` - Văn bản
 
-The tool supports previewing and renaming the following file types:
-- `.docx` - Word Documents
-- `.doc` - Legacy Word Documents (Windows only)
-- `.xlsx` - Excel Spreadsheets
-- `.xls` - Legacy Excel Spreadsheets
-- `.pdf` - PDF Documents
-- `.txt` - Text Files
+## Cài Đặt
 
-## Setup Instructions
+### 1. Yêu cầu hệ thống
+- Python 3.8 trở lên
+- virtualenv hoặc venv module
 
-### 1. Prerequisites
-- Python 3.8 or higher
-- virtualenv or venv module
-
-### 2. Create and Activate Virtual Environment
+### 2. Tạo môi trường ảo
 
 #### Windows
 ```bash
-# Create virtual environment
+# Tạo môi trường ảo
 python -m venv .venv
 
-# Activate virtual environment
+# Kích hoạt môi trường
 .venv\Scripts\activate
 ```
 
 #### Linux/MacOS
 ```bash
-# Create virtual environment
+# Tạo môi trường ảo
 python -m venv .venv
 
-# Activate virtual environment
+# Kích hoạt môi trường
 source .venv/bin/activate
 ```
 
-### 3. Install Dependencies
+### 3. Cài đặt thư viện
 ```bash
-# Install all required packages
+# Cài đặt các gói cần thiết
 pip install -r requirements.txt
 ```
 
-### 4. Run the Application
+### 4. Chạy ứng dụng
 ```bash
-# Make sure your virtual environment is activated
+# Đảm bảo môi trường ảo đã được kích hoạt
 python -m src.main
 ```
 
-To deactivate the virtual environment when you're done:
+Để tắt môi trường ảo:
 ```bash
 deactivate
 ```
 
-## Project Structure
+## Cấu Trúc Dự Án
 ```
-.venv/              # Virtual environment directory
+.venv/              # Thư mục môi trường ảo
 src/
-├── __init__.py     # Package initialization
-├── constants.py    # Application constants
-├── file_operations.py   # File handling operations
-├── main.py        # Main entry point
-└── ui.py          # GUI components
-requirements.txt    # Project dependencies
-WINDOWS.md         # Windows-specific documentation
+├── __init__.py     # Khởi tạo package
+├── constants.py    # Các hằng số
+├── file_operations.py   # Xử lý tập tin
+├── main.py        # Điểm vào chương trình
+└── ui.py          # Giao diện người dùng
+requirements.txt    # Các thư viện cần thiết
 ```
 
-## Features
-- Select directory to rename supported files
-- Add prefix and/or suffix to filenames
-- Preview file contents before renaming
-- Preview changes before applying
-- Creates copies in a new "renamed_files" directory (keeps originals intact)
-- Simple and intuitive interface
+## Cách Sử Dụng
 
-## How to Use
+1. Nhấn "Chọn Thư Mục" để chọn thư mục chứa tập tin cần đổi tên
+2. Chọn số dòng xem trước (1-50)
+3. Chọn kiểu đổi tên:
+   - Dùng Nội Dung: Tự động dùng nội dung tập tin
+   - AI Tóm Tắt: (Sắp có)
+   - Tiền Tố/Hậu Tố: Thêm tiền tố hoặc hậu tố vào tên cũ
+4. Nhấn "Xem Trước" để xem kết quả
+5. Nhấn "Áp Dụng" để tạo bản sao với tên mới
 
-1. Click "Load Directory" to select the folder containing files to rename
-2. Enter desired prefix and/or suffix
-3. View file contents in the preview column
-4. Click "Preview Changes" to see how files will be renamed
-5. Click "Apply Changes" to create renamed copies in a new "renamed_files" folder
+## Lưu Ý
+- Tập tin gốc được giữ nguyên
+- Tập tin mới được tạo trong thư mục "renamed_files"
+- Phần mở rộng tập tin được giữ nguyên
+- Cần cài đặt thư viện tương ứng cho mỗi loại tập tin
+- Tên tập tin trùng sẽ tự động thêm số (1), (2),...
 
-## Notes
-- Original files remain unchanged
-- New files are created in a "renamed_files" subdirectory
-- File extensions are preserved during renaming
-- Preview requires appropriate dependencies for each file type
-- Missing dependencies will show installation instructions in preview
+## Xử Lý Sự Cố
 
-## Basic Troubleshooting
+### Thiếu thư viện
+Nếu thấy thông báo "Cần cài đặt...":
+1. Đảm bảo môi trường ảo đã được kích hoạt
+2. Chạy lại `pip install -r requirements.txt`
 
-For detailed troubleshooting:
-- Windows users: See [WINDOWS.md](WINDOWS.md)
-- Linux/MacOS users: Create an issue if you encounter problems
+### Lỗi quyền truy cập
+- Đảm bảo có quyền đọc/ghi trong thư mục
+- Chạy ứng dụng với quyền phù hợp
 
-### Missing Dependencies
-If you see "Install [package] for [file type] preview" messages:
-1. Make sure your virtual environment is activated
-2. Run `pip install -r requirements.txt` again
-
-### Permission Issues
-- Make sure you have read/write permissions in the directory
-- Run the application with appropriate permissions
-
-### Preview Not Working
-- Check if the required dependencies are installed
-- Verify that the file isn't corrupted
-- For .doc files on Windows, ensure MS Word is installed
+### Xem trước không hoạt động
+- Kiểm tra thư viện cần thiết đã được cài đặt
+- Kiểm tra tập tin có bị hỏng không
+- Với file .doc trên Windows, cần cài Microsoft Word
