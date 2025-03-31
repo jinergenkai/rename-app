@@ -1,0 +1,8 @@
+# Core requirements
+python-docx    # For .docx files
+pywin32; platform_system=="Windows"    # For .doc files (Windows only)
+pandas        # For Excel files
+openpyxl      # For .xlsx files
+xlrd          # For .xls files
+PyMuPDF       # For PDF files (primary)
+pdfplumber    # For PDF files (backup)

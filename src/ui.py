@@ -15,11 +15,13 @@ class FileRenamerUI:
         self.root.title(c.WINDOW_TITLE)
         self.root.geometry(c.WINDOW_SIZE)
         
-        # Store current directory
+        # Store current directory and preview mode
         self.current_directory: Optional[str] = None
         self.files: List[str] = []
+        self.preview_mode = c.PREVIEW_FIRST_LINE
         
         self._create_directory_frame()
+        self._create_supported_files_frame()
         self._create_files_frame()
         self._create_buttons_frame()
         self._create_pattern_frame()
@@ -35,6 +37,28 @@ class FileRenamerUI:
         
         self.dir_label = ttk.Label(self.dir_frame, text=c.NO_DIR_SELECTED)
         self.dir_label.pack(fill=tk.X)
+        
+    def _create_supported_files_frame(self) -> None:
+        """Create frame showing supported file types."""
+        self.supported_frame = ttk.LabelFrame(
+            self.root,
+            text=c.SUPPORTED_FILES_TEXT,
+            padding="10"
+        )
+        self.supported_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        # Create a text widget for better formatting
+        supported_text = tk.Text(
+            self.supported_frame,
+            height=len(c.SUPPORTED_EXTENSIONS),
+            wrap=tk.WORD,
+            font=('TkDefaultFont', 9),
+            relief=tk.FLAT,
+            background=self.root.cget('bg')
+        )
+        supported_text.pack(fill=tk.X, padx=5)
+        supported_text.insert('1.0', c.SUPPORTED_FILES_LIST)
+        supported_text.configure(state='disabled')  # Make read-only
         
     def _create_files_frame(self) -> None:
         """Create the files list frame with treeview."""
@@ -97,6 +121,14 @@ class FileRenamerUI:
         )
         self.load_btn.pack(side=tk.LEFT, padx=5)
         
+        # Add preview mode toggle button
+        self.preview_mode_btn = ttk.Button(
+            self.buttons_frame,
+            text=c.PREVIEW_MODE_BTN,
+            command=self.toggle_preview_mode
+        )
+        self.preview_mode_btn.pack(side=tk.LEFT, padx=5)
+        
     def _create_pattern_frame(self) -> None:
         """Create the rename pattern frame."""
         self.pattern_frame = ttk.LabelFrame(
@@ -138,6 +170,15 @@ class FileRenamerUI:
             command=self.apply_changes
         )
         self.apply_btn.pack(side=tk.LEFT, padx=5)
+        
+    def toggle_preview_mode(self) -> None:
+        """Toggle between preview modes."""
+        current_index = c.PREVIEW_MODES.index(self.preview_mode)
+        next_index = (current_index + 1) % len(c.PREVIEW_MODES)
+        self.preview_mode = c.PREVIEW_MODES[next_index]
+        # Refresh the preview if files are loaded
+        if self.current_directory and self.files:
+            self._update_tree_view(self.files)
         
     def load_files(self) -> None:
         """Load files from selected directory."""
@@ -205,8 +246,10 @@ class FileRenamerUI:
     ) -> None:
         """Update the tree view with files."""
         self.tree.delete(*self.tree.get_children())
+        is_multi_line = self.preview_mode == c.PREVIEW_MULTI_LINE
+        
         for file in files:
             new_name = file if new_name_func is None else new_name_func(file)
             file_path = os.path.join(self.current_directory, file)
-            preview = fo.get_file_preview(file_path, c.PREVIEW_CHARS)
+            preview = fo.get_file_preview(file_path, is_multi_line)
             self.tree.insert("", tk.END, values=(file, new_name, preview))
