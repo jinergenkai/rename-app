@@ -7,3 +7,4 @@ xlrd          # For .xls files
 PyMuPDF       # For PDF files (primary)
 pdfplumber    # For PDF files (backup)
 openai==0.28.0  # For OpenAI API (specific version)
+pyinstaller   # For creating executable

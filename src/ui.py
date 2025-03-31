@@ -246,21 +246,6 @@ class FileRenamerUI:
         )
         preview_frame.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 5))
         
-        # Number of lines entry
-        ttk.Label(
-            preview_frame,
-            text=c.PREVIEW_LINES_LABEL
-        ).pack(side=tk.LEFT, padx=5)
-        
-        vcmd = (self.root.register(self._validate_number), '%P')
-        self.preview_lines_entry = ttk.Entry(
-            preview_frame,
-            textvariable=self.preview_lines,
-            width=5,
-            validate='all',
-            validatecommand=vcmd
-        )
-        self.preview_lines_entry.pack(side=tk.LEFT, padx=5)
         
         # Pattern selection
         pattern_frame = ttk.Frame(preview_frame)

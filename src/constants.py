@@ -54,7 +54,7 @@ PATTERN_OPTIONS = [
 OPENAI_MODEL = "gpt-3.5-turbo"
 MAX_CONTENT_CHARS = 1000
 AI_PROMPT = """
-Dựa vào nội dung sau, hãy tạo một tên tập tin ngắn gọn (dưới 200 ký tự) mô tả chính xác nội dung. Chỉ trả về tên tập tin, không kèm giải thích.
+Dựa vào nội dung sau, hãy tạo một tên tập tin ngắn gọn (tối đa 100 ký tự) mô tả chính xác nội dung. Chỉ trả về tên tập tin (không kèm đuôi file), không kèm giải thích.
 
 Nội dung:
 {content}
@@ -97,10 +97,10 @@ FILE_ERROR = "⚠ Lỗi đọc tập tin: {}"
 RENAMED_FILES_DIR = "renamed_files"
 
 # Preview settings
-DEFAULT_PREVIEW_LINES = 1
+DEFAULT_PREVIEW_LINES = 10
 MAX_PREVIEW_LINES = 50
 PREVIEW_PLACEHOLDER = "(Tập tin trống hoặc không đọc được)"
-MAX_FILENAME_LENGTH = 200
+MAX_FILENAME_LENGTH = 100
 
 # Config file
 CONFIG_FILE = ".config"

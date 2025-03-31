@@ -105,3 +105,45 @@ Nếu thấy thông báo "Cần cài đặt...":
 - Kiểm tra thư viện cần thiết đã được cài đặt
 - Kiểm tra tập tin có bị hỏng không
 - Với file .doc trên Windows, cần cài Microsoft Word
+
+## Tạo File Thực Thi (EXE)
+
+Để tạo file thực thi độc lập cho Windows:
+
+1. Đảm bảo đã cài đặt môi trường và các thư viện:
+```bash
+# Kích hoạt môi trường ảo
+.venv\Scripts\activate
+
+# Cài đặt các thư viện cần thiết
+pip install -r requirements.txt
+```
+
+2. Tạo file exe bằng PyInstaller:
+```bash
+# Di chuyển vào thư mục gốc của dự án
+# Tạo file exe với các tùy chọn cần thiết
+pyinstaller --name "RenameFiles" ^
+            --icon "src/assets/icon.ico" ^
+            --windowed ^
+            --add-data "src;src" ^
+            --noconfirm ^
+            "src/main.py"
+```
+
+File thực thi sẽ được tạo trong thư mục `dist/RenameFiles`.
+
+Các tùy chọn PyInstaller:
+- `--name`: Tên file thực thi
+- `--icon`: Icon cho ứng dụng (tùy chọn)
+- `--windowed`: Không hiện cửa sổ console
+- `--add-data`: Thêm các file/thư mục cần thiết
+- `--noconfirm`: Không hỏi xác nhận khi ghi đè
+
+3. Chạy file thực thi:
+- Mở thư mục `dist/RenameFiles`
+- Chạy file `RenameFiles.exe`
+
+Lưu ý:
+- Đảm bảo tất cả thư viện cần thiết đã được cài đặt trước khi tạo file exe
+- Có thể cần thêm tùy chọn `--hidden-import` nếu có thư viện không được tự động phát hiện
