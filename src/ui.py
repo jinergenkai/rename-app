@@ -1,9 +1,11 @@
 """GUI components and event handlers."""
 
 import os
+import queue
+import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Dict
 
 from . import constants as c
 from . import file_operations as fo
@@ -20,10 +22,32 @@ class FileRenamerUI:
         self.files: List[str] = []
         self.preview_lines = tk.StringVar(value=str(c.DEFAULT_PREVIEW_LINES))
         
+        # Store file previews to avoid reloading
+        self.preview_cache: Dict[str, str] = {}
+        
         self._create_directory_frame()
         self._create_options_frame()
         self._create_files_frame()
         self._create_pattern_frame()
+        self._create_progress_frame()
+        
+    def _create_progress_frame(self) -> None:
+        """Create progress bar frame."""
+        self.progress_frame = ttk.Frame(self.root, padding="5")
+        self.progress_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        self.progress_var = tk.StringVar(value="")
+        self.progress_label = ttk.Label(
+            self.progress_frame,
+            textvariable=self.progress_var
+        )
+        self.progress_label.pack(side=tk.LEFT, padx=5)
+        
+        self.progress_bar = ttk.Progressbar(
+            self.progress_frame,
+            mode='determinate',
+            length=200
+        )
         
     def _create_directory_frame(self) -> None:
         """Create the directory selection frame."""
@@ -102,9 +126,20 @@ class FileRenamerUI:
             return True
         try:
             num = int(value)
-            return 1 <= num <= c.MAX_PREVIEW_LINES
+            if 1 <= num <= c.MAX_PREVIEW_LINES:
+                self._refresh_previews()
+                return True
+            return False
         except ValueError:
             return False
+            
+    def _refresh_previews(self) -> None:
+        """Refresh all file previews with new line count."""
+        if not self.current_directory or not self.files:
+            return
+            
+        self.preview_cache.clear()
+        self._update_tree_view(self.files)
         
     def _create_files_frame(self) -> None:
         """Create the files list frame with treeview."""
@@ -204,7 +239,44 @@ class FileRenamerUI:
             self.current_directory = directory
             self.dir_label.config(text=directory)
             self.files = fo.get_files_in_directory(directory)
-            self._update_tree_view(self.files)
+            self.preview_cache.clear()
+            
+            # Show progress bar
+            self.progress_bar.pack(side=tk.LEFT, padx=5)
+            self.progress_bar["maximum"] = len(self.files)
+            self.progress_bar["value"] = 0
+            
+            # Start loading files
+            self.tree.delete(*self.tree.get_children())
+            self._load_next_file(0)
+            
+    def _load_next_file(self, index: int) -> None:
+        """Load next file and its preview."""
+        if index >= len(self.files):
+            # Done loading
+            self.progress_var.set("Loading complete")
+            self.progress_bar.pack_forget()
+            return
+            
+        file = self.files[index]
+        file_path = os.path.join(self.current_directory, file)
+        
+        try:
+            preview_lines = int(self.preview_lines.get())
+        except ValueError:
+            preview_lines = c.DEFAULT_PREVIEW_LINES
+            
+        # Update progress
+        self.progress_var.set(f"Loading {index + 1}/{len(self.files)}: {file}")
+        self.progress_bar["value"] = index + 1
+        
+        # Get preview and add to tree
+        preview = fo.get_file_preview(file_path, preview_lines > 1, preview_lines)
+        self.preview_cache[file] = preview
+        self.tree.insert("", tk.END, values=(file, file, preview))
+        
+        # Schedule next file load
+        self.root.after(10, self._load_next_file, index + 1)
             
     def preview_changes(self) -> None:
         """Preview filename changes."""
@@ -264,13 +336,7 @@ class FileRenamerUI:
         """Update the tree view with files."""
         self.tree.delete(*self.tree.get_children())
         
-        try:
-            preview_lines = int(self.preview_lines.get())
-        except ValueError:
-            preview_lines = c.DEFAULT_PREVIEW_LINES
-        
         for file in files:
             new_name = file if new_name_func is None else new_name_func(file)
-            file_path = os.path.join(self.current_directory, file)
-            preview = fo.get_file_preview(file_path, preview_lines > 1, preview_lines)
+            preview = self.preview_cache.get(file, "Loading...")
             self.tree.insert("", tk.END, values=(file, new_name, preview))
