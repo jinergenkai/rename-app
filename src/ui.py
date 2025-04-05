@@ -42,10 +42,9 @@ class FileRenamerUI:
         self.right_pane = ttk.Frame(self.main_container)
         self.main_container.add(self.right_pane, weight=1)
         
-        # Store current directory and preview lines
+        # Store current directory
         self.current_directory: Optional[str] = None
         self.files: List[str] = []
-        self.preview_lines = tk.StringVar(value=str(c.DEFAULT_PREVIEW_LINES))
         
         # Initialize with content pattern
         self.pattern = tk.StringVar(value=c.PATTERN_CONTENT)
@@ -162,19 +161,6 @@ class FileRenamerUI:
         # Make read-only
         self.console.configure(state='disabled')
         
-    def _validate_number(self, value: str) -> bool:
-        """Validate the preview lines entry."""
-        if value == "":
-            return True
-        try:
-            num = int(value)
-            if 1 <= num <= c.MAX_PREVIEW_LINES:
-                if hasattr(self, 'preview_cache'):  # Check if fully initialized
-                    self._refresh_previews()
-                return True
-            return False
-        except ValueError:
-            return False
         
     def _log(self, level: str, message: str) -> None:
         """Log a message to the console."""
@@ -408,15 +394,9 @@ class FileRenamerUI:
         progress = (index + 1) / len(self.files) * 100
         self.progress_bar["value"] = index + 1
         self._log_info(f"⏳ ({index + 1}/{len(self.files)}) Đang tải: {file}")
-        
-        try:
-            preview_lines = int(self.preview_lines.get())
-        except ValueError:
-            preview_lines = c.DEFAULT_PREVIEW_LINES
-            
         # Get preview and add to tree
         try:
-            preview = fo.get_file_preview(file_path, preview_lines > 1, preview_lines)
+            preview = fo.get_file_preview(file_path)
             if "Không thể đọc" in preview or "Cần cài đặt" in preview:
                 self._log_error(f"⚠ {file}: {preview}")
             else:
@@ -447,6 +427,12 @@ class FileRenamerUI:
         """Handle pattern selection change."""
         pattern = self.pattern.get()
         
+        # Show message and reset pattern if AI Summary is selected
+        if pattern == c.PATTERN_AI:
+            messagebox.showinfo("Thông báo", "Tính năng AI Tóm tắt hiện đang bị tắt.")
+            self.pattern.set(c.PATTERN_CONTENT)
+            return
+            
         # Show/hide prefix/suffix inputs
         if pattern == c.PATTERN_PREFIX_SUFFIX:
             self.prefix_suffix_frame.pack(side=tk.LEFT, padx=20)

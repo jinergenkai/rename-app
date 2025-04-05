@@ -46,7 +46,6 @@ PATTERN_AI = "AI Tóm Tắt"
 PATTERN_PREFIX_SUFFIX = "Tiền Tố/Hậu Tố"
 PATTERN_OPTIONS = [
     PATTERN_CONTENT,
-    PATTERN_AI,
     PATTERN_PREFIX_SUFFIX
 ]
 
@@ -97,10 +96,8 @@ FILE_ERROR = "⚠ Lỗi đọc tập tin: {}"
 RENAMED_FILES_DIR = "renamed_files"
 
 # Preview settings
-DEFAULT_PREVIEW_LINES = 10
-MAX_PREVIEW_LINES = 50
 PREVIEW_PLACEHOLDER = "(Tập tin trống hoặc không đọc được)"
-MAX_FILENAME_LENGTH = 100
+MAX_FILENAME_LENGTH = 200
 
 # Config file
 CONFIG_FILE = ".config"
@@ -110,10 +107,6 @@ API_KEY_FILE = ".apikey"
 SUPPORTED_EXTENSIONS = {
     '.docx': 'Tài liệu Word (*.docx)',
     '.doc': 'Tài liệu Word cũ (*.doc)',
-    '.xlsx': 'Bảng tính Excel (*.xlsx)',
-    '.xls': 'Bảng tính Excel cũ (*.xls)',
-    '.pdf': 'Tài liệu PDF (*.pdf)',
-    '.txt': 'Văn bản (*.txt)',
 }
 
 # Get formatted supported files text
@@ -131,10 +124,4 @@ Cho file .docx:
 
 Cho file .doc (Windows):
     pip install pywin32
-
-Cho file Excel:
-    pip install pandas openpyxl xlrd
-
-Cho file PDF:
-    pip install pymupdf pdfplumber
 """
