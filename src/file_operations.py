@@ -90,8 +90,6 @@ def get_files_in_directory(directory: str) -> List[str]:
 def create_new_filename(
     filename: str,
     pattern: str,
-    prefix: str = "",
-    suffix: str = "",
     content: Optional[str] = None,
     used_names: Optional[Set[str]] = None,
     ai_summaries: Optional[Dict[str, str]] = None
@@ -110,10 +108,6 @@ def create_new_filename(
             ai_summaries[filename] = summary
             return new_name
         return handle_duplicate_name(f"{name}_ai", ext, used_names)
-    elif pattern == c.PATTERN_PREFIX_SUFFIX:
-        new_name = f"{prefix}{name}{suffix}"
-        return handle_duplicate_name(new_name, ext, used_names)
-    
     return filename
 
 def create_renamed_directory(base_dir: str, new_dir_name: str) -> str:

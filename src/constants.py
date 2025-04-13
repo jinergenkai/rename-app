@@ -5,16 +5,14 @@ WINDOW_TITLE = "Công Cụ Đổi Tên Tập Tin"
 WINDOW_SIZE = "1300x700"
 
 # Step instructions
-INSTRUCTION_TEXT = """Các bước thực hiện:
+INSTRUCTION_TEXT = """Tool đổi tên tập tin
 1. Chọn thư mục chứa tập tin cần đổi tên
-2. Chọn cách đổi tên:
-   • Dùng Nội Dung: Tự động dùng nội dung của file
-   • AI Tóm Tắt: Sử dụng AI để tạo tên thông minh
-   • Tiền Tố/Hậu Tố: Thêm tiền tố hoặc hậu tố vào tên cũ
-3. Nhấn "Xem Trước" để kiểm tra kết quả
-4. Nhấn "Áp Dụng" để hoàn tất đổi tên
-==========================
-*** Lưu ý khi thay đổi Tùy Chọn mà xảy ra lỗi -> vui lòng chọn lại thư mục cần đổi tên"""
+2. Đợi tập tin tải lên (file doc cũ tải lâu hơn file docx) muốn đọc file doc phải có office cài trên máy
+3. Các lưu ý:
+    - Tên tập tin sẽ thêm dấu ★ để phân biệt với tập tin gốc
+    - Tool sẽ không đổi tên các file đã có dấu ★
+    - Tool sẽ tạo thư mục mới có tên "renamed_files" trong thư mục đã chọn để lưu các tập tin đã đổi tên sau khi bạn nhấn "Áp Dụng"
+4. Nhấn "Áp Dụng" để hoàn tất đổi tên """
 
 # UI text
 INSTRUCTION_FRAME_TEXT = "Hướng Dẫn Sử Dụng"
@@ -23,12 +21,6 @@ NO_DIR_SELECTED = "Chưa chọn thư mục"
 FILES_FRAME_TEXT = "Danh Sách Tập Tin"
 RENAME_PATTERN_TEXT = "Tùy Chọn Đổi Tên"
 SUPPORTED_FILES_TEXT = "Định Dạng Hỗ Trợ:"
-PREVIEW_OPTIONS_TEXT = "Tùy Chọn Xem Trước"
-PREVIEW_LINES_LABEL = "Số dòng xem trước:"
-API_KEY_BUTTON = "Nhập API Key"
-API_KEY_PROMPT = "Nhập OpenAI API Key:"
-API_KEY_SAVED = "✓ Đã lưu API Key"
-API_KEY_REQUIRED = "⚠ Cần có API Key để sử dụng tính năng AI"
 CONSOLE_TEXT = "Thông Báo Hệ Thống"
 
 # Confirmation messages
@@ -41,13 +33,7 @@ LOG_ERROR = "[LỖI]"
 LOG_TIME_FORMAT = "%H:%M:%S"
 
 # Rename patterns
-PATTERN_CONTENT = "Dùng Nội Dung"
 PATTERN_AI = "AI Tóm Tắt"
-PATTERN_PREFIX_SUFFIX = "Tiền Tố/Hậu Tố"
-PATTERN_OPTIONS = [
-    PATTERN_CONTENT,
-    PATTERN_PREFIX_SUFFIX
-]
 
 # AI settings
 OPENAI_MODEL = "gpt-3.5-turbo"
@@ -68,17 +54,11 @@ Tóm tắt ngắn gọn nội dung sau trong 100 ký tự:
 # Column names
 ORIGINAL_NAME_COL = "Tên Gốc"
 NEW_NAME_COL = "Tên Mới"
-PREVIEW_COL = "Xem Trước Nội Dung"
-AI_SUMMARY_COL = "Tóm Tắt AI"
-
 # Column widths
 NAME_COL_WIDTH = 200
-PREVIEW_COL_WIDTH = 300
-AI_SUMMARY_COL_WIDTH = 200
 
 # Button texts
 LOAD_DIR_BTN = "Chọn Thư Mục"
-PREVIEW_BTN = "Xem Trước"
 APPLY_BTN = "Áp Dụng"
 
 # Messages
@@ -95,13 +75,10 @@ FILE_ERROR = "⚠ Lỗi đọc tập tin: {}"
 # Folder names
 RENAMED_FILES_DIR = "renamed_files"
 
-# Preview settings
-PREVIEW_PLACEHOLDER = "(Tập tin trống hoặc không đọc được)"
 MAX_FILENAME_LENGTH = 200
 
 # Config file
 CONFIG_FILE = ".config"
-API_KEY_FILE = ".apikey"
 
 # Supported file extensions with Vietnamese descriptions
 SUPPORTED_EXTENSIONS = {

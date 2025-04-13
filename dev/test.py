@@ -177,6 +177,10 @@ def read_doc_paragraphs(filepath, line_limit=None):
     except Exception as e:
         print(f"❌ Lỗi khi mở file .doc: {e}")
 
+def clean_filename(filename):
+    filename = re.sub(r'[\x00-\x1F]', '', filename)
+    return re.sub(r'[<>:"/\\|?*\n\r\t\f\v]', '', filename).strip()
+
 def process_text(paragraphs, match_keywords, ignore_keywords, **kwargs):
     # Find max font size
     max_font_size = max((p.font_size or 0) for p in paragraphs)
@@ -206,13 +210,24 @@ def process_text(paragraphs, match_keywords, ignore_keywords, **kwargs):
     # Convert to list of dictionaries for printing AFTER scoring
     lines_data = [p.to_dict() for p in paragraphs]
     lines_data.sort(key=lambda x: x['points'], reverse=True)  # Sort by points
-    # pprint.pprint(lines_data) # show all lines with points
+    pprint.pprint(lines_data) # show all lines with points
 
     # Sort paragraphs by points and get top 3
     sorted_paras = sorted(paragraphs, key=lambda p: p.points, reverse=True)
-    top_texts = [p.text for p in sorted_paras[:3]]
+    top_texts = [clean_filename(p.text) for p in sorted_paras[:3]]
+
+    print(f"Top texts: {top_texts}")  # Debugging output
+
     while len(top_texts) < 3:  # Ensure we have 3 items even if null
         top_texts.append("")
+
+    cnt_empty = 0
+    for i in top_texts:
+        if i == "":
+            cnt_empty += 1
+    if cnt_empty == 3:
+        return None
+    
     
     # Find year if present
     all_text = "\n".join(p.text for p in paragraphs)
@@ -221,8 +236,8 @@ def process_text(paragraphs, match_keywords, ignore_keywords, **kwargs):
 
     def create_filename(main, secondary_texts):
         # Join secondary texts with separator
-        secondary_part = " - " + " , ".join(t for t in secondary_texts if t)
-        return f"{main}{year_str}{secondary_part} ★".strip()
+        secondary_part = " - " + " - ".join(t for t in secondary_texts if t)
+        return f"{main}{year_str}{secondary_part}".strip()
 
     # First try with full secondary texts
     main_text = top_texts[0]
@@ -230,35 +245,8 @@ def process_text(paragraphs, match_keywords, ignore_keywords, **kwargs):
     
     # Create initial filename and clean invalid chars
     filename = create_filename(main_text, secondary_texts)
-    filename = re.sub(r'[<>:"/\\|?*]', '', filename)
+    filename = filename[:200] + " ★"
 
-    # If over 200 chars, start cutting from secondary texts
-    if len(filename) > 200:
-        # Calculate available space after main text, year, and symbol
-        space_for_secondary = 200 - len(main_text) - len(year_str) - 5  # 5 for " - " and "★"
-        
-        if space_for_secondary > 10:  # Only if we have reasonable space
-            # Try to fit as much of secondary texts as possible
-            shortened_secondary = []
-            remaining_space = space_for_secondary
-            
-            for text in secondary_texts:
-                if remaining_space > 5:  # Need at least 5 chars per text
-                    # Calculate space for this text (including separator)
-                    text_space = min(len(text), remaining_space - 3)
-                    shortened_secondary.append(text[:text_space])
-                    remaining_space -= len(shortened_secondary[-1]) + 3  # Account for separator
-            
-            filename = create_filename(main_text, shortened_secondary)
-            filename = re.sub(r'[<>:"/\\|?*]', '', filename)
-            
-            # If still too long, cut from main text
-            if len(filename) > 200:
-                space_for_main = 200 - len(year_str) - 5  # Leave space for year and symbol
-                main_text = main_text[:space_for_main]
-                filename = f"{main_text}{year_str} ★"
-                filename = re.sub(r'[<>:"/\\|?*]', '', filename)
-    
     return filename
 
 def clean_text(text):
@@ -321,6 +309,10 @@ def rename_file_with_rules(filepath, match_keywords, ignore_keywords, line_limit
     try:
         # Process text and generate new filename
         new_filename = process_text(paragraphs, match_keywords, ignore_keywords, length_limit=length_limit)
+        if new_filename is None:
+            log_operation("ERROR", filepath, error="Failed to generate filename")
+            print(f"❌ Lỗi: Không thể tạo tên file mới.")
+            return None
         new_path = os.path.join(os.path.dirname(filepath), new_filename + file_extension)
         
         # Get unique filename if target exists
@@ -351,7 +343,7 @@ ignore_keywords = load_keywords("ignore.txt")  # Load từ khóa cần loại b�
 
 # Process files
 pairs = []
-filenames = ["file/123.docx", "file/111.doc"]
+filenames = ["file/123.docx", 'file/image.doc']
 for filename in filenames:
     result = rename_file_with_rules(filename, match_keywords, ignore_keywords,
                                   line_limit=10, length_limit=200)

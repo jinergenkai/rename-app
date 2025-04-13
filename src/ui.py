@@ -1,6 +1,7 @@
 """GUI components and event handlers."""
 
 import os
+import shutil
 from datetime import datetime
 import tkinter as tk
 from tkinter import ttk, filedialog, simpledialog, messagebox
@@ -8,19 +9,7 @@ from typing import List, Optional, Callable, Dict, Set
 
 from . import constants as c
 from . import file_operations as fo
-from . import ai_operations as ai
-
-class APIKeyDialog(simpledialog.Dialog):
-    """Dialog for entering API key."""
-    
-    def body(self, master):
-        ttk.Label(master, text=c.API_KEY_PROMPT).grid(row=0, column=0, padx=5, pady=5)
-        self.entry = ttk.Entry(master, width=50, show="*")
-        self.entry.grid(row=0, column=1, padx=5, pady=5)
-        return self.entry
-        
-    def apply(self):
-        self.result = self.entry.get()
+from . import core
 
 class FileRenamerUI:
     def __init__(self, root: tk.Tk):
@@ -45,13 +34,8 @@ class FileRenamerUI:
         # Store current directory
         self.current_directory: Optional[str] = None
         self.files: List[str] = []
-        
-        # Initialize with content pattern
-        self.pattern = tk.StringVar(value=c.PATTERN_CONTENT)
-        
-        # Store file previews and AI summaries
-        self.preview_cache: Dict[str, str] = {}
-        self.ai_summaries: Dict[str, str] = {}
+        self.match_keywords = []
+        self.ignore_keywords = []
         
         # Track used filenames
         self.used_names: Set[str] = set()
@@ -66,13 +50,16 @@ class FileRenamerUI:
         self._create_directory_frame()
         self._create_options_frame()
         self._create_files_frame()
-        self._create_buttons_frame()
         
         # Create console in right pane
         self._create_console_frame()
         
-        # Hide prefix/suffix frame by default since we're using content pattern
-        self.prefix_suffix_frame.pack_forget()
+        # Load keywords
+        try:
+            self.match_keywords = core.load_keywords("match.txt")
+            self.ignore_keywords = core.load_keywords("ignore.txt")
+        except Exception as e:
+            self._log_error(f"Error loading keywords: {str(e)}")
         
         # Log initial message
         self._log_info("Chương trình đã sẵn sàng")
@@ -201,97 +188,17 @@ class FileRenamerUI:
         self.dir_label = ttk.Label(self.dir_frame, text=c.NO_DIR_SELECTED)
         self.dir_label.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
         
-        # Add API Key button
-        self.api_btn = ttk.Button(
-            self.dir_frame,
-            text=c.API_KEY_BUTTON,
-            command=self._set_api_key
-        )
-        self.api_btn.pack(side=tk.RIGHT, padx=5)
-        
-    def _set_api_key(self) -> None:
-        """Show dialog to set API key."""
-        dialog = APIKeyDialog(self.root)
-        if dialog.result:
-            try:
-                ai.save_api_key(dialog.result)
-                self._log_info(c.API_KEY_SAVED)
-            except Exception as e:
-                self._log_error(str(e))
-        
-    def _create_options_frame(self) -> None:
-        """Create frame for preview options and supported files."""
-        options_frame = ttk.Frame(self.left_pane)
-        options_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        # Preview options on the left
-        preview_frame = ttk.LabelFrame(
-            options_frame,
-            text=c.PREVIEW_OPTIONS_TEXT,
-            padding="10"
-        )
-        preview_frame.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 5))
-        
-        
-        # Pattern selection
-        pattern_frame = ttk.Frame(preview_frame)
-        pattern_frame.pack(side=tk.LEFT, padx=20)
-        
-        for pattern in c.PATTERN_OPTIONS:
-            ttk.Radiobutton(
-                pattern_frame,
-                text=pattern,
-                value=pattern,
-                variable=self.pattern,
-                command=self._on_pattern_change
-            ).pack(side=tk.LEFT, padx=10)
-        
-        # Prefix/Suffix frame
-        self.prefix_suffix_frame = ttk.Frame(preview_frame)
-        self.prefix_suffix_frame.pack(side=tk.LEFT, padx=20)
-        
-        # Prefix entry
-        ttk.Label(self.prefix_suffix_frame, text="Prefix:").pack(side=tk.LEFT, padx=5)
-        self.prefix_var = tk.StringVar()
-        self.prefix_entry = ttk.Entry(
-            self.prefix_suffix_frame,
-            textvariable=self.prefix_var
-        )
-        self.prefix_entry.pack(side=tk.LEFT, padx=5)
-        
-        # Suffix entry
-        ttk.Label(self.prefix_suffix_frame, text="Suffix:").pack(side=tk.LEFT, padx=5)
-        self.suffix_var = tk.StringVar()
-        self.suffix_entry = ttk.Entry(
-            self.prefix_suffix_frame,
-            textvariable=self.suffix_var
-        )
-        self.suffix_entry.pack(side=tk.LEFT, padx=5)
-        
-        # Hide prefix/suffix frame by default
-        self.prefix_suffix_frame.pack_forget()
-        
-        # Supported files frame is now created in _create_instruction_frame
-        
-    def _create_buttons_frame(self) -> None:
-        """Create frame for action buttons."""
-        buttons_frame = ttk.Frame(self.left_pane)
-        buttons_frame.pack(fill=tk.X, padx=10, pady=5)
-        
-        # Preview and Apply buttons on the left
-        self.preview_btn = ttk.Button(
-            buttons_frame,
-            text=c.PREVIEW_BTN,
-            command=self.preview_changes
-        )
-        self.preview_btn.pack(side=tk.LEFT, padx=5)
-        
+        # Add Apply button
         self.apply_btn = ttk.Button(
-            buttons_frame,
+            self.dir_frame,
             text=c.APPLY_BTN,
             command=self.apply_changes
         )
-        self.apply_btn.pack(side=tk.LEFT, padx=5)
+        self.apply_btn.pack(side=tk.RIGHT, padx=5)
+        
+    def _create_options_frame(self) -> None:
+        """Create frame for supported files."""
+        pass
         
     def _create_files_frame(self) -> None:
         """Create the files list frame with treeview."""
@@ -307,9 +214,7 @@ class FileRenamerUI:
             self.files_frame,
             columns=(
                 c.ORIGINAL_NAME_COL,
-                c.NEW_NAME_COL,
-                c.PREVIEW_COL,
-                c.AI_SUMMARY_COL
+                c.NEW_NAME_COL
             ),
             show="headings"
         )
@@ -317,13 +222,9 @@ class FileRenamerUI:
         # Configure columns
         self.tree.heading(c.ORIGINAL_NAME_COL, text=c.ORIGINAL_NAME_COL)
         self.tree.heading(c.NEW_NAME_COL, text=c.NEW_NAME_COL)
-        self.tree.heading(c.PREVIEW_COL, text=c.PREVIEW_COL)
-        self.tree.heading(c.AI_SUMMARY_COL, text=c.AI_SUMMARY_COL)
         
         self.tree.column(c.ORIGINAL_NAME_COL, width=c.NAME_COL_WIDTH)
         self.tree.column(c.NEW_NAME_COL, width=c.NAME_COL_WIDTH)
-        self.tree.column(c.PREVIEW_COL, width=c.PREVIEW_COL_WIDTH)
-        self.tree.column(c.AI_SUMMARY_COL, width=c.AI_SUMMARY_COL_WIDTH)
         # Create scrollbars
         v_scrollbar = ttk.Scrollbar(
             self.files_frame,
@@ -362,8 +263,6 @@ class FileRenamerUI:
                 self._log_info(f"Không tìm thấy tập tin hỗ trợ trong thư mục: {directory}")
                 return
                 
-            self.preview_cache.clear()
-            self.ai_summaries.clear()
             self.used_names.clear()
             
             # Show progress
@@ -380,7 +279,7 @@ class FileRenamerUI:
             self._load_next_file(0)
             
     def _load_next_file(self, index: int) -> None:
-        """Load next file and its preview."""
+        """Load next file."""
         if index >= len(self.files):
             # Done loading
             self._log_info("✓ Đã tải xong tất cả tập tin")
@@ -394,70 +293,18 @@ class FileRenamerUI:
         progress = (index + 1) / len(self.files) * 100
         self.progress_bar["value"] = index + 1
         self._log_info(f"⏳ ({index + 1}/{len(self.files)}) Đang tải: {file}")
-        # Get preview and add to tree
-        try:
-            preview = fo.get_file_preview(file_path)
-            if "Không thể đọc" in preview or "Cần cài đặt" in preview:
-                self._log_error(f"⚠ {file}: {preview}")
-            else:
-                self._log_info(f"✓ Đã tải: {file}")
-        except Exception as e:
-            preview = str(e)
-            self._log_error(f"⚠ {file}: {preview}")
-            
-        self.preview_cache[file] = preview
-        self.tree.insert("", tk.END, values=(file, file, preview, ""))
-        
-        # Update UI immediately
+        result = core.rename_file_with_rules(
+            file_path,
+            self.match_keywords,
+            self.ignore_keywords,
+            line_limit=10,
+            length_limit=200
+        )
+        new_name = os.path.basename(result) if result else file
+        self.tree.insert("", tk.END, values=(file, new_name))
         self.root.update_idletasks()
-        
-        # Schedule next file load
         self.root.after(10, self._load_next_file, index + 1)
             
-    def _refresh_previews(self) -> None:
-        """Refresh all file previews with new line count."""
-        if not self.current_directory or not self.files:
-            return
-            
-        self.preview_cache.clear()
-        self.used_names.clear()
-        self._update_tree_view(self.files)
-    
-    def _on_pattern_change(self) -> None:
-        """Handle pattern selection change."""
-        pattern = self.pattern.get()
-        
-        # Show message and reset pattern if AI Summary is selected
-        if pattern == c.PATTERN_AI:
-            messagebox.showinfo("Thông báo", "Tính năng AI Tóm tắt hiện đang bị tắt.")
-            self.pattern.set(c.PATTERN_CONTENT)
-            return
-            
-        # Show/hide prefix/suffix inputs
-        if pattern == c.PATTERN_PREFIX_SUFFIX:
-            self.prefix_suffix_frame.pack(side=tk.LEFT, padx=20)
-        else:
-            self.prefix_suffix_frame.pack_forget()
-            
-    def preview_changes(self) -> None:
-        """Preview filename changes."""
-        if not self._validate_directory():
-            self._log_error(c.WARNING_SELECT_DIR)
-            return
-            
-        pattern = self.pattern.get()
-        if pattern == c.PATTERN_AI:
-            # Check for API key
-            if not ai.load_api_key():
-                self._log_error(c.API_KEY_REQUIRED)
-                return
-
-        self._log_info(f"Xem trước thay đổi với kiểu: {pattern}")
-        
-        # Clear used names for new preview
-        self.used_names.clear()
-        self.ai_summaries.clear()
-        self._update_tree_view(self.files)
             
     def apply_changes(self) -> None:
         """Apply the rename changes with confirmation."""
@@ -479,14 +326,29 @@ class FileRenamerUI:
                 for item in self.tree.get_children()
             ]
             
-            # Process files
-            new_dir = fo.process_files(
-                self.current_directory,
-                files_to_rename,
-                c.RENAMED_FILES_DIR
-            )
+            # Create renamed directory
+            new_dir = os.path.join(self.current_directory, c.RENAMED_FILES_DIR)
+            if not os.path.exists(new_dir):
+                os.makedirs(new_dir)
             
-            if any(old != new for old, new in files_to_rename):
+            success_count = 0
+            for old_name, new_name in files_to_rename:
+                if old_name == new_name:
+                    continue
+                    
+                old_path = os.path.join(self.current_directory, old_name)
+                new_path = os.path.join(new_dir, new_name)
+                
+                # Handle duplicate filenames
+                new_path = core.get_unique_filename(new_path)
+                final_name = os.path.basename(new_path)
+                
+                # Copy file with new name
+                shutil.copy2(old_path, new_path)
+                success_count += 1
+                self._log_info(f"✓ {old_name} → {final_name}")
+            
+            if success_count > 0:
                 self._log_info(c.SUCCESS_MESSAGE.format(new_dir))
             else:
                 self._log_info(c.NO_CHANGES_MESSAGE)
@@ -507,54 +369,19 @@ class FileRenamerUI:
     ) -> None:
         """Update the tree view with files."""
         self.tree.delete(*self.tree.get_children())
-        pattern = self.pattern.get()
-        
-        # Show progress for AI processing
-        if pattern == c.PATTERN_AI:
-            self.progress_bar = ttk.Progressbar(
-                self.progress_frame,
-                mode='determinate',
-                maximum=len(files)
-            )
-            self.progress_bar.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
-            self._log_info(f"Bắt đầu xử lý AI cho {len(files)} tập tin")
         
         for i, file in enumerate(files):
-            preview = self.preview_cache.get(file, "Loading...")
-            ai_summary = self.ai_summaries.get(file, "")
-            
             try:
-                if pattern == c.PATTERN_PREFIX_SUFFIX:
-                    new_name = fo.create_new_filename(
-                        file,
-                        pattern,
-                        self.prefix_var.get(),
-                        self.suffix_var.get(),
-                        used_names=self.used_names
-                    )
-                elif pattern == c.PATTERN_CONTENT:
-                    new_name = fo.create_new_filename(
-                        file,
-                        pattern,
-                        content=preview,
-                        used_names=self.used_names
-                    )
-                elif pattern == c.PATTERN_AI:
-                    self._log_info(f"⏳ ({i + 1}/{len(files)}) Đang xử lý AI: {file}")
-                    self.progress_bar["value"] = i + 1
-                    
-                    new_name = fo.create_new_filename(
-                        file,
-                        pattern,
-                        content=preview,
-                        used_names=self.used_names,
-                        ai_summaries=self.ai_summaries
-                    )
-                    ai_summary = self.ai_summaries.get(file, "")
-                    self._log_info(f"✓ Đã xử lý AI: {file}")
-                else:
-                    new_name = file
-                    
+                file_path = os.path.join(self.current_directory, file)
+                result = core.rename_file_with_rules(
+                    file_path,
+                    self.match_keywords,
+                    self.ignore_keywords,
+                    line_limit=10,
+                    length_limit=200
+                )
+                
+                new_name = os.path.basename(result) if result else file
                 if new_name != file:
                     self._log_info(f"→ {file} → {new_name}")
                     
@@ -562,12 +389,5 @@ class FileRenamerUI:
                 new_name = file
                 self._log_error(f"⚠ {file}: {str(e)}")
                 
-            self.tree.insert("", tk.END, values=(file, new_name, preview, ai_summary))
-            
-            # Update UI immediately
+            self.tree.insert("", tk.END, values=(file, new_name))
             self.root.update_idletasks()
-        
-        # Remove progress bar after AI processing
-        if pattern == c.PATTERN_AI:
-            self.progress_bar.pack_forget()
-            self._log_info("✓ Đã hoàn thành xử lý AI")

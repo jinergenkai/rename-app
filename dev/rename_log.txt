@@ -36,3 +36,25 @@
 [2025-04-13 22:41:58] RENAME: file/111.doc -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2021 - CÔNG TY CP , SỰ KIỆN KINH BẮC ★.doc
 [2025-04-14 00:20:23] RENAME: file/123.docx -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2020 - (Thỏa thuận lao động nội bộ giữa Công ty và người lao động) , Điều 1. Thời giờ làm việc ★.docx
 [2025-04-14 00:20:28] RENAME: file/111.doc -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2021 - CÔNG TY CP , SỰ KIỆN KINH BẮC ★.doc
+[2025-04-14 02:00:21] RENAME: file/123.docx -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2020 - (Thỏa thuận lao động nội bộ giữa Công ty và người lao động) , Điều 1. Thời giờ làm việc ★.docx
+[2025-04-14 02:00:25] RENAME: file/111.doc -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2021 - CÔNG TY CP , SỰ KIỆN KINH BẮC ★.doc
+[2025-04-14 02:00:30] RENAME: file/image.doc ->  -  ★.doc
+[2025-04-14 02:02:33] RENAME: file/123.docx -> - (            ) ,  ..docx
+[2025-04-14 02:02:38] RENAME: file/111.doc -> -    ,.doc
+[2025-04-14 02:02:42] RENAME: file/image.doc ->  - .doc
+[2025-04-14 02:03:18] RENAME: file/123.docx -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2020 - (Thỏa thuận lao động nội bộ giữa Công ty và người lao động) - Điều 1. Thời giờ làm việc ★.docx
+[2025-04-14 02:03:22] RENAME: file/111.doc -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2021 - CÔNG TY CP - SỰ KIỆN KINH BẮC ★.doc
+[2025-04-14 02:03:27] RENAME: file/image.doc -> - ★.doc
+[2025-04-14 02:03:49] RENAME: file/123.docx -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2020 - (Thỏa thuận lao động nội bộ giữa Công ty và người lao động) - Điều 1. Thời giờ làm việc ★.docx
+[2025-04-14 02:03:53] RENAME: file/111.doc -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2021 - CÔNG TY CP - SỰ KIỆN KINH BẮC ★.doc
+[2025-04-14 02:03:57] RENAME: file/image.doc -> - ★.doc
+[2025-04-14 02:05:08] RENAME: file/123.docx -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2020 - (Thỏa thuận lao động nội bộ giữa Công ty và người lao động) - Điều 1. Thời giờ làm việc ★.docx
+[2025-04-14 02:05:52] RENAME: file/123.docx -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2020 - (Thỏa thuận lao động nội bộ giữa Công ty và người lao động) - Điều 1. Thời giờ làm việc ★.docx
+[2025-04-14 02:05:55] RENAME: file/111.doc -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2021 - CÔNG TY CP - SỰ KIỆN KINH BẮC ★.doc
+[2025-04-14 02:05:59] RENAME: file/image.doc -> - ★.doc
+[2025-04-14 02:06:40] RENAME: file/123.docx -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2020 - (Thỏa thuận lao động nội bộ giữa Công ty và người lao động) - Điều 1. Thời giờ làm việc ★.docx
+[2025-04-14 02:06:45] RENAME: file/image.doc -> - ★.doc
+[2025-04-14 02:07:04] RENAME: file/123.docx -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2020 - (Thỏa thuận lao động nội bộ giữa Công ty và người lao động) - Điều 1. Thời giờ làm việc ★.docx
+[2025-04-14 02:07:09] ERROR: file/image.doc - Failed to generate filename
+[2025-04-14 02:08:03] RENAME: file/123.docx -> THỎA THUẬN LAO ĐỘNG NỘI BỘ 2020 - (Thỏa thuận lao động nội bộ giữa Công ty và người lao động) - Điều 1. Thời giờ làm việc ★.docx
+[2025-04-14 02:08:08] ERROR: file/image.doc - Failed to generate filename
