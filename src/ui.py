@@ -16,7 +16,6 @@ class FileRenamerUI:
         """Initialize the UI components."""
         self.root = root
         self.root.title(c.WINDOW_TITLE)
-        # self.root.geometry(c.WINDOW_SIZE)
         self.root.state('zoomed')
         
         # Create main container with left and right panes
@@ -40,18 +39,11 @@ class FileRenamerUI:
         # Track used filenames
         self.used_names: Set[str] = set()
         
-        # Create progress frame first
-        self._create_progress_frame()
-        
-        # Create instruction frame at the top
+        # Initialize UI components
         self._create_instruction_frame()
-        
-        # Create UI components in left pane
         self._create_directory_frame()
-        self._create_options_frame()
         self._create_files_frame()
-        
-        # Create console in right pane
+        self._create_progress_frame()
         self._create_console_frame()
         
         # Load keywords
@@ -64,8 +56,9 @@ class FileRenamerUI:
         # Log initial message
         self._log_info("Chương trình đã sẵn sàng")
 
+    # UI Creation Methods
     def _create_instruction_frame(self) -> None:
-        """Create instruction frame with step-by-step guide."""
+        """Create instruction frame with step-by-step guide and supported file types."""
         # Create a container frame for instruction and supported files
         container = ttk.Frame(self.left_pane)
         container.pack(fill=tk.X, padx=10, pady=5)
@@ -113,7 +106,7 @@ class FileRenamerUI:
         supported_text.configure(state='disabled')  # Make read-only
 
     def _create_progress_frame(self) -> None:
-        """Create progress frame."""
+        """Create progress frame for displaying file loading progress."""
         self.progress_frame = ttk.Frame(self.left_pane)
         self.progress_frame.pack(fill=tk.X, padx=10, pady=5)
 
@@ -149,6 +142,7 @@ class FileRenamerUI:
         self.console.configure(state='disabled')
         
         
+    # Logging Methods
     def _log(self, level: str, message: str) -> None:
         """Log a message to the console."""
         timestamp = datetime.now().strftime(c.LOG_TIME_FORMAT)
@@ -168,7 +162,7 @@ class FileRenamerUI:
         self._log(c.LOG_ERROR, message)
         
     def _create_directory_frame(self) -> None:
-        """Create the directory selection frame."""
+        """Create frame for directory selection and action buttons."""
         self.dir_frame = ttk.LabelFrame(
             self.left_pane,
             text=c.DIRECTORY_FRAME_TEXT,
@@ -196,12 +190,8 @@ class FileRenamerUI:
         )
         self.apply_btn.pack(side=tk.RIGHT, padx=5)
         
-    def _create_options_frame(self) -> None:
-        """Create frame for supported files."""
-        pass
-        
     def _create_files_frame(self) -> None:
-        """Create the files list frame with treeview."""
+        """Create frame with treeview for displaying original and new filenames."""
         self.files_frame = ttk.LabelFrame(
             self.left_pane,
             text=c.FILES_FRAME_TEXT,
@@ -251,13 +241,19 @@ class FileRenamerUI:
             xscrollcommand=h_scrollbar.set
         )
         
+    # File Operation Methods
     def load_files(self) -> None:
         """Load files from selected directory."""
         directory = filedialog.askdirectory(initialdir=os.getcwd())
         if directory:
             self.current_directory = directory
             self.dir_label.config(text=directory)
-            self.files = fo.get_files_in_directory(directory)
+            self.files = fo.get_files_in_directory(
+                directory,
+                extensions=['.doc', '.docx'],
+                exclude_patterns=['★'],
+                limit=20
+            )
             
             if not self.files:
                 self._log_info(f"Không tìm thấy tập tin hỗ trợ trong thư mục: {directory}")
@@ -265,8 +261,8 @@ class FileRenamerUI:
                 
             self.used_names.clear()
             
-            # Show progress
-            self._log_info(f"Bắt đầu tải {len(self.files)} tập tin từ: {directory}")
+            # Show progress with file limit info
+            self._log_info(f"Bắt đầu tải {len(self.files)} tập tin (giới hạn 20 tập tin .doc/.docx) từ: {directory}")
             self.progress_bar = ttk.Progressbar(
                 self.progress_frame,
                 mode='determinate',
@@ -289,8 +285,7 @@ class FileRenamerUI:
         file = self.files[index]
         file_path = os.path.join(self.current_directory, file)
         
-        # Update progress
-        progress = (index + 1) / len(self.files) * 100
+        # Update progress bar
         self.progress_bar["value"] = index + 1
         self._log_info(f"⏳ ({index + 1}/{len(self.files)}) Đang tải: {file}")
         result = core.rename_file_with_rules(
@@ -306,19 +301,26 @@ class FileRenamerUI:
         self.root.after(10, self._load_next_file, index + 1)
             
             
-    def apply_changes(self) -> None:
-        """Apply the rename changes with confirmation."""
+    # Event Handler Methods
+    def apply_changes(self, rename_in_place: bool = True) -> None:
+        """Apply the rename changes with confirmation.
+        
+        Args:
+            rename_in_place: If True, rename files in current directory.
+                           If False, create copies in a new directory.
+        """
         if not self._validate_directory():
             self._log_error(c.WARNING_SELECT_DIR)
             return
-            
+        
+        action_msg = "đổi tên" if rename_in_place else "sao chép"
         if not messagebox.askyesno(
             "Xác nhận",
-            c.CONFIRM_APPLY_DETAIL,
+            f"Bạn có chắc chắn muốn {action_msg} các tập tin đã chọn không?",
             icon='warning'
         ):
             return
-            
+        
         try:
             # Get all files to rename
             files_to_rename = [
@@ -326,30 +328,41 @@ class FileRenamerUI:
                 for item in self.tree.get_children()
             ]
             
-            # Create renamed directory
-            new_dir = os.path.join(self.current_directory, c.RENAMED_FILES_DIR)
-            if not os.path.exists(new_dir):
-                os.makedirs(new_dir)
-            
             success_count = 0
             for old_name, new_name in files_to_rename:
                 if old_name == new_name:
                     continue
-                    
+                
                 old_path = os.path.join(self.current_directory, old_name)
-                new_path = os.path.join(new_dir, new_name)
                 
-                # Handle duplicate filenames
-                new_path = core.get_unique_filename(new_path)
-                final_name = os.path.basename(new_path)
+                if rename_in_place:
+                    new_path = os.path.join(self.current_directory, new_name)
+                    # Handle duplicate filenames
+                    new_path = core.get_unique_filename(new_path)
+                    final_name = os.path.basename(new_path)
+                    # Rename file in place
+                    os.rename(old_path, new_path)
+                else:
+                    # Create renamed directory for copies
+                    new_dir = os.path.join(self.current_directory, c.RENAMED_FILES_DIR)
+                    if not os.path.exists(new_dir):
+                        os.makedirs(new_dir)
+                    new_path = os.path.join(new_dir, new_name)
+                    # Handle duplicate filenames
+                    new_path = core.get_unique_filename(new_path)
+                    final_name = os.path.basename(new_path)
+                    # Copy file with new name
+                    shutil.copy2(old_path, new_path)
                 
-                # Copy file with new name
-                shutil.copy2(old_path, new_path)
                 success_count += 1
-                self._log_info(f"✓ {old_name} → {final_name}")
+                operation = "✓ Đổi tên" if rename_in_place else "✓ Sao chép"
+                self._log_info(f"{operation}: {old_name} → {final_name}")
             
             if success_count > 0:
-                self._log_info(c.SUCCESS_MESSAGE.format(new_dir))
+                if rename_in_place:
+                    self._log_info(f"Đã đổi tên {success_count} tập tin thành công")
+                else:
+                    self._log_info(c.SUCCESS_MESSAGE.format(new_dir))
             else:
                 self._log_info(c.NO_CHANGES_MESSAGE)
                 
@@ -362,32 +375,3 @@ class FileRenamerUI:
             return False
         return True
         
-    def _update_tree_view(
-        self,
-        files: List[str],
-        new_name_func: Optional[Callable[[str], str]] = None
-    ) -> None:
-        """Update the tree view with files."""
-        self.tree.delete(*self.tree.get_children())
-        
-        for i, file in enumerate(files):
-            try:
-                file_path = os.path.join(self.current_directory, file)
-                result = core.rename_file_with_rules(
-                    file_path,
-                    self.match_keywords,
-                    self.ignore_keywords,
-                    line_limit=10,
-                    length_limit=200
-                )
-                
-                new_name = os.path.basename(result) if result else file
-                if new_name != file:
-                    self._log_info(f"→ {file} → {new_name}")
-                    
-            except Exception as e:
-                new_name = file
-                self._log_error(f"⚠ {file}: {str(e)}")
-                
-            self.tree.insert("", tk.END, values=(file, new_name))
-            self.root.update_idletasks()

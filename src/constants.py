@@ -9,9 +9,9 @@ INSTRUCTION_TEXT = """Tool đổi tên tập tin
 1. Chọn thư mục chứa tập tin cần đổi tên
 2. Đợi tập tin tải lên (file doc cũ tải lâu hơn file docx) muốn đọc file doc phải có office cài trên máy
 3. Các lưu ý:
-    - Tên tập tin sẽ thêm dấu ★ để phân biệt với tập tin gốc
+    - Tên tập tin sẽ thêm dấu ★ để phân biệt với tập tin chưa đổi tên
     - Tool sẽ không đổi tên các file đã có dấu ★
-    - Tool sẽ tạo thư mục mới có tên "renamed_files" trong thư mục đã chọn để lưu các tập tin đã đổi tên sau khi bạn nhấn "Áp Dụng"
+    - Khi chọn folder, tool sẽ load 20 file đầu tiên không có dấu ★
 4. Nhấn "Áp Dụng" để hoàn tất đổi tên """
 
 # UI text

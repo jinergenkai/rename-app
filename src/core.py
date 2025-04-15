@@ -143,7 +143,8 @@ def read_doc_paragraphs(filepath, line_limit=None):
         abs_path = os.path.abspath(filepath)
         word = win32com.client.Dispatch("Word.Application")
         word.Visible = False
-        doc = word.Documents.Open(abs_path)
+        word.DisplayAlerts = 0  # Tắt cảnh báo
+        doc = word.Documents.Open(abs_path, ReadOnly=True)
         
         paragraphs = []
         processed_count = 0

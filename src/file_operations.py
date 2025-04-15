@@ -79,13 +79,48 @@ def process_text_for_preview(text: str) -> str:
         
     return text
 
-def get_files_in_directory(directory: str) -> List[str]:
-    """Get list of supported files in the specified directory."""
-    return [
-        f for f in os.listdir(directory)
-        if os.path.isfile(os.path.join(directory, f))
-        and os.path.splitext(f)[1].lower() in c.SUPPORTED_EXTENSIONS
-    ]
+def get_files_in_directory(
+    directory: str,
+    extensions: Optional[List[str]] = None,
+    exclude_patterns: Optional[List[str]] = None,
+    limit: Optional[int] = None
+) -> List[str]:
+    """Get list of files in the specified directory with filters.
+    
+    Args:
+        directory: Directory to search in
+        extensions: List of file extensions to include (e.g. ['.doc', '.docx'])
+        exclude_patterns: List of patterns to exclude from filenames
+        limit: Maximum number of files to return
+    """
+    # Use supported extensions if none specified
+    extensions = extensions or c.SUPPORTED_EXTENSIONS
+    
+    # Convert extensions to lowercase for case-insensitive matching
+    extensions = [ext.lower() if not ext.startswith('.') else ext.lower()
+                 for ext in extensions]
+    
+    files = []
+    for f in os.listdir(directory):
+        # Check if regular file
+        if not os.path.isfile(os.path.join(directory, f)):
+            continue
+            
+        # Check extension
+        if os.path.splitext(f)[1].lower() not in extensions:
+            continue
+            
+        # Check exclude patterns
+        if exclude_patterns and any(pattern in f for pattern in exclude_patterns):
+            continue
+            
+        files.append(f)
+        
+        # Check limit
+        if limit and len(files) >= limit:
+            break
+            
+    return files
 
 def create_new_filename(
     filename: str,
